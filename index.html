@@ -73,8 +73,24 @@
 
     .todo-text {
       flex: 1;
+      min-width: 0;
       font-size: 15px;
       line-height: 1.4;
+    }
+
+    .todo-text .title {
+      display: block;
+    }
+
+    .due {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      color: #4f7cff;
+    }
+
+    .due[hidden] {
+      display: none;
     }
 
     .tag {
@@ -93,6 +109,9 @@
 
     .todo-item.done .todo-text {
       color: #9aa3b2;
+    }
+
+    .todo-item.done .title {
       text-decoration: line-through;
     }
 
@@ -107,6 +126,18 @@
       font-weight: 600;
       letter-spacing: 0.04em;
       color: #8a94a6;
+    }
+
+    .deadline select {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 9px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #fafbfc;
+      font: inherit;
+      font-size: 14px;
+      color: #1f2937;
     }
 
     .deadline-row {
@@ -126,7 +157,8 @@
       color: #1f2937;
     }
 
-    .deadline-row input:focus {
+    .deadline-row input:focus,
+    .deadline select:focus {
       outline: none;
       border-color: #4f7cff;
       background: #ffffff;
@@ -149,6 +181,17 @@
       background: #3f6af0;
     }
 
+    .deadline-hint {
+      min-height: 16px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #8a94a6;
+    }
+
+    .deadline-hint.error {
+      color: #e05656;
+    }
+
     .todo-footer {
       padding: 16px 24px;
       border-top: 1px solid #eef0f3;
@@ -165,44 +208,150 @@
     </header>
 
     <ul class="todo-list">
-      <li class="todo-item done">
+      <li class="todo-item done" data-id="t1">
         <input type="checkbox" checked disabled />
-        <span class="todo-text">整理本周的工作计划</span>
+        <div class="todo-text">
+          <span class="title">整理本周的工作计划</span>
+          <span class="due" hidden></span>
+        </div>
         <span class="tag done">已完成</span>
       </li>
-      <li class="todo-item done">
+      <li class="todo-item done" data-id="t2">
         <input type="checkbox" checked disabled />
-        <span class="todo-text">阅读 Git 基础教程</span>
+        <div class="todo-text">
+          <span class="title">阅读 Git 基础教程</span>
+          <span class="due" hidden></span>
+        </div>
         <span class="tag done">已完成</span>
       </li>
-      <li class="todo-item">
+      <li class="todo-item" data-id="t3">
         <input type="checkbox" disabled />
-        <span class="todo-text">练习提交与分支操作</span>
+        <div class="todo-text">
+          <span class="title">练习提交与分支操作</span>
+          <span class="due" hidden></span>
+        </div>
         <span class="tag">进行中</span>
       </li>
-      <li class="todo-item">
+      <li class="todo-item" data-id="t4">
         <input type="checkbox" disabled />
-        <span class="todo-text">编写项目说明文档</span>
+        <div class="todo-text">
+          <span class="title">编写项目说明文档</span>
+          <span class="due" hidden></span>
+        </div>
         <span class="tag">待开始</span>
       </li>
-      <li class="todo-item">
+      <li class="todo-item" data-id="t5">
         <input type="checkbox" disabled />
-        <span class="todo-text">回顾今天的学习笔记</span>
+        <div class="todo-text">
+          <span class="title">回顾今天的学习笔记</span>
+          <span class="due" hidden></span>
+        </div>
         <span class="tag">待开始</span>
       </li>
     </ul>
 
     <section class="deadline">
       <h2>添加截止时间</h2>
+      <select id="taskSelect" aria-label="选择任务"></select>
       <div class="deadline-row">
-        <input type="datetime-local" value="2026-11-10T18:00" aria-label="截止时间" />
-        <button type="button">添加</button>
+        <input id="dueInput" type="datetime-local" value="2026-11-10T18:00" aria-label="截止时间" />
+        <button id="saveDeadline" type="button">保存</button>
       </div>
+      <p class="deadline-hint" id="deadlineHint" aria-live="polite"></p>
     </section>
 
     <footer class="todo-footer">
       已完成 2 项 · 还剩 3 项
     </footer>
   </main>
+
+  <script>
+    (function () {
+      var STORAGE_KEY = 'todo-deadlines';
+      var saved = {};
+
+      try {
+        saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {};
+      } catch (error) {
+        saved = {};
+      }
+
+      var select = document.getElementById('taskSelect');
+      var input = document.getElementById('dueInput');
+      var button = document.getElementById('saveDeadline');
+      var hint = document.getElementById('deadlineHint');
+      var items = Array.prototype.slice.call(document.querySelectorAll('.todo-item'));
+
+      function formatDeadline(value) {
+        var parts = value.split('T');
+        var date = parts[0].split('-');
+        return '截止 ' + Number(date[1]) + '月' + Number(date[2]) + '日 ' + parts[1];
+      }
+
+      function renderDue(item) {
+        var due = item.querySelector('.due');
+        var value = saved[item.getAttribute('data-id')];
+
+        if (value) {
+          due.textContent = formatDeadline(value);
+          due.hidden = false;
+        } else {
+          due.textContent = '';
+          due.hidden = true;
+        }
+      }
+
+      items.forEach(function (item) {
+        var id = item.getAttribute('data-id');
+        var title = item.querySelector('.title').textContent;
+        var option = document.createElement('option');
+
+        option.value = id;
+        option.textContent = title;
+        select.appendChild(option);
+        renderDue(item);
+      });
+
+      select.value = 't3';
+      input.value = saved[select.value] || input.value;
+
+      function showHint(message, isError) {
+        hint.textContent = message;
+        hint.classList.toggle('error', Boolean(isError));
+      }
+
+      select.addEventListener('change', function () {
+        input.value = saved[select.value] || '';
+        showHint('', false);
+      });
+
+      button.addEventListener('click', function () {
+        if (!input.value) {
+          showHint('请先选择截止时间', true);
+          return;
+        }
+
+        var id = select.value;
+        var item = document.querySelector('.todo-item[data-id="' + id + '"]');
+        var title = select.options[select.selectedIndex].textContent;
+
+        saved[id] = input.value;
+        renderDue(item);
+
+        var stored = true;
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+        } catch (error) {
+          stored = false;
+        }
+
+        if (stored) {
+          showHint('已保存「' + title + '」的截止时间', false);
+        } else {
+          showHint('已更新显示，但浏览器阻止了本地保存', true);
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
