@@ -47,6 +47,18 @@
       color: #8a94a6;
     }
 
+    .overdue-notice {
+      padding: 10px 24px;
+      border-bottom: 1px solid #fee2e2;
+      background: #fef2f2;
+      font-size: 12px;
+      color: #dc2626;
+    }
+
+    .overdue-notice[hidden] {
+      display: none;
+    }
+
     .todo-list {
       list-style: none;
       padding: 8px 0;
@@ -91,6 +103,10 @@
 
     .due[hidden] {
       display: none;
+    }
+
+    .due.overdue {
+      color: #dc2626;
     }
 
     .tag {
@@ -207,6 +223,8 @@
       <p>今天是 11 月 9 日，共 5 项任务</p>
     </header>
 
+    <div class="overdue-notice" id="overdueNotice" aria-live="polite" hidden></div>
+
     <ul class="todo-list">
       <li class="todo-item done" data-id="t1">
         <input type="checkbox" checked disabled />
@@ -280,12 +298,27 @@
       var input = document.getElementById('dueInput');
       var button = document.getElementById('saveDeadline');
       var hint = document.getElementById('deadlineHint');
+      var notice = document.getElementById('overdueNotice');
       var items = Array.prototype.slice.call(document.querySelectorAll('.todo-item'));
 
       function formatDeadline(value) {
         var parts = value.split('T');
         var date = parts[0].split('-');
-        return '截止 ' + Number(date[1]) + '月' + Number(date[2]) + '日 ' + parts[1];
+        return Number(date[1]) + '月' + Number(date[2]) + '日 ' + parts[1];
+      }
+
+      function deadlineTime(item) {
+        var value = saved[item.getAttribute('data-id')];
+        if (!value) {
+          return null;
+        }
+        var time = new Date(value).getTime();
+        return isNaN(time) ? null : time;
+      }
+
+      function isOverdue(item) {
+        var time = deadlineTime(item);
+        return time !== null && time < Date.now();
       }
 
       function renderDue(item) {
@@ -293,12 +326,29 @@
         var value = saved[item.getAttribute('data-id')];
 
         if (value) {
-          due.textContent = formatDeadline(value);
+          var overdue = isOverdue(item) && !item.classList.contains('done');
+          due.textContent = (overdue ? '已过期 · ' : '截止 ') + formatDeadline(value);
+          due.classList.toggle('overdue', overdue);
           due.hidden = false;
         } else {
           due.textContent = '';
+          due.classList.remove('overdue');
           due.hidden = true;
         }
+      }
+
+      function updateNotice() {
+        var count = items.filter(function (item) {
+          return !item.classList.contains('done') && isOverdue(item);
+        }).length;
+
+        notice.hidden = count === 0;
+        notice.textContent = count === 0 ? '' : '有 ' + count + ' 项任务已过期，请及时处理';
+      }
+
+      function refreshAll() {
+        items.forEach(renderDue);
+        updateNotice();
       }
 
       items.forEach(function (item) {
@@ -309,11 +359,11 @@
         option.value = id;
         option.textContent = title;
         select.appendChild(option);
-        renderDue(item);
       });
 
       select.value = 't3';
       input.value = saved[select.value] || input.value;
+      refreshAll();
 
       function showHint(message, isError) {
         hint.textContent = message;
@@ -337,6 +387,7 @@
 
         saved[id] = input.value;
         renderDue(item);
+        updateNotice();
 
         var stored = true;
         try {
@@ -345,12 +396,18 @@
           stored = false;
         }
 
-        if (stored) {
-          showHint('已保存「' + title + '」的截止时间', false);
-        } else {
+        var expired = !item.classList.contains('done') && isOverdue(item);
+
+        if (!stored) {
           showHint('已更新显示，但浏览器阻止了本地保存', true);
+        } else if (expired) {
+          showHint('已保存，但「' + title + '」的截止时间已过期', true);
+        } else {
+          showHint('已保存「' + title + '」的截止时间', false);
         }
       });
+
+      setInterval(refreshAll, 30000);
     })();
   </script>
 </body>
