@@ -96,6 +96,59 @@
       text-decoration: line-through;
     }
 
+    .deadline {
+      padding: 16px 24px 20px;
+      border-top: 1px solid #eef0f3;
+    }
+
+    .deadline h2 {
+      margin-bottom: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: #8a94a6;
+    }
+
+    .deadline-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .deadline-row input {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #fafbfc;
+      font: inherit;
+      font-size: 14px;
+      color: #1f2937;
+    }
+
+    .deadline-row input:focus {
+      outline: none;
+      border-color: #4f7cff;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.12);
+    }
+
+    .deadline-row button {
+      flex-shrink: 0;
+      padding: 9px 18px;
+      border: none;
+      border-radius: 10px;
+      background: #4f7cff;
+      color: #ffffff;
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .deadline-row button:hover {
+      background: #3f6af0;
+    }
+
     .todo-footer {
       padding: 16px 24px;
       border-top: 1px solid #eef0f3;
@@ -138,6 +191,14 @@
         <span class="tag">待开始</span>
       </li>
     </ul>
+
+    <section class="deadline">
+      <h2>添加截止时间</h2>
+      <div class="deadline-row">
+        <input type="datetime-local" value="2026-11-10T18:00" aria-label="截止时间" />
+        <button type="button">添加</button>
+      </div>
+    </section>
 
     <footer class="todo-footer">
       已完成 2 项 · 还剩 3 项
