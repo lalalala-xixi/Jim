@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>任务代办</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #f3f4f6;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: #1f2937;
+    }
+
+    .todo {
+      width: 100%;
+      max-width: 420px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+    }
+
+    .todo-header {
+      padding: 24px 24px 16px;
+      border-bottom: 1px solid #eef0f3;
+    }
+
+    .todo-header h1 {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .todo-header p {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #8a94a6;
+    }
+
+    .todo-list {
+      list-style: none;
+      padding: 8px 0;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 24px;
+    }
+
+    .todo-item + .todo-item {
+      border-top: 1px solid #f4f5f7;
+    }
+
+    .todo-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #4f7cff;
+      flex-shrink: 0;
+      cursor: default;
+    }
+
+    .todo-text {
+      flex: 1;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .tag {
+      flex-shrink: 0;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: #eef2ff;
+      color: #4f7cff;
+    }
+
+    .tag.done {
+      background: #f0f2f5;
+      color: #9aa3b2;
+    }
+
+    .todo-item.done .todo-text {
+      color: #9aa3b2;
+      text-decoration: line-through;
+    }
+
+    .todo-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #eef0f3;
+      font-size: 12px;
+      color: #8a94a6;
+    }
+  </style>
+</head>
+<body>
+  <main class="todo">
+    <header class="todo-header">
+      <h1>任务代办</h1>
+      <p>今天是 11 月 9 日，共 5 项任务</p>
+    </header>
+
+    <ul class="todo-list">
+      <li class="todo-item done">
+        <input type="checkbox" checked disabled />
+        <span class="todo-text">整理本周的工作计划</span>
+        <span class="tag done">已完成</span>
+      </li>
+      <li class="todo-item done">
+        <input type="checkbox" checked disabled />
+        <span class="todo-text">阅读 Git 基础教程</span>
+        <span class="tag done">已完成</span>
+      </li>
+      <li class="todo-item">
+        <input type="checkbox" disabled />
+        <span class="todo-text">练习提交与分支操作</span>
+        <span class="tag">进行中</span>
+      </li>
+      <li class="todo-item">
+        <input type="checkbox" disabled />
+        <span class="todo-text">编写项目说明文档</span>
+        <span class="tag">待开始</span>
+      </li>
+      <li class="todo-item">
+        <input type="checkbox" disabled />
+        <span class="todo-text">回顾今天的学习笔记</span>
+        <span class="tag">待开始</span>
+      </li>
+    </ul>
+
+    <footer class="todo-footer">
+      已完成 2 项 · 还剩 3 项
+    </footer>
+  </main>
+</body>
+</html>
