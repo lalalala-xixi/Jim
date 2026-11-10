@@ -105,12 +105,17 @@
       border-top: 1px solid #f4f5f7;
     }
 
+    .todo-item:not(.done) {
+      cursor: pointer;
+    }
+
     .todo-item input[type="checkbox"] {
       width: 18px;
       height: 18px;
       accent-color: #4f7cff;
       flex-shrink: 0;
       cursor: default;
+      pointer-events: none;
     }
 
     .todo-text {
@@ -530,16 +535,29 @@
         completeAllButton.disabled = doneCount === items.length;
       }
 
-      completeAllButton.addEventListener('click', function () {
-        items.forEach(function (item) {
-          item.classList.add('done');
-          item.querySelector('input[type="checkbox"]').checked = true;
+      function markDone(item) {
+        item.classList.add('done');
+        item.querySelector('input[type="checkbox"]').checked = true;
 
-          var tag = item.querySelector('.tag');
-          tag.textContent = '已完成';
-          tag.classList.add('done');
+        var tag = item.querySelector('.tag');
+        tag.textContent = '已完成';
+        tag.classList.add('done');
+      }
+
+      items.forEach(function (item) {
+        item.addEventListener('click', function () {
+          if (item.classList.contains('done')) {
+            return;
+          }
+
+          markDone(item);
+          updateStats();
+          refreshAll();
         });
+      });
 
+      completeAllButton.addEventListener('click', function () {
+        items.forEach(markDone);
         updateStats();
         refreshAll();
       });
