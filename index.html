@@ -179,7 +179,7 @@
       color: #8a94a6;
     }
 
-    .deadline select {
+    .task-name-input {
       width: 100%;
       margin-bottom: 8px;
       padding: 9px 12px;
@@ -209,7 +209,7 @@
     }
 
     .deadline-row input:focus,
-    .deadline select:focus {
+    .task-name-input:focus {
       outline: none;
       border-color: #4f7cff;
       background: #ffffff;
@@ -355,8 +355,8 @@
     </ul>
 
     <section class="deadline">
-      <h2>添加截止时间</h2>
-      <select id="taskSelect" aria-label="选择任务"></select>
+      <h2>添加任务</h2>
+      <input class="task-name-input" id="taskNameInput" type="text" placeholder="输入任务名称" autocomplete="off" aria-label="任务名称" />
       <div class="deadline-row">
         <input id="dueInput" type="datetime-local" value="2026-11-10T18:00" aria-label="截止时间" />
         <button id="saveDeadline" type="button">保存</button>
@@ -382,12 +382,24 @@
         saved = {};
       }
 
-      var select = document.getElementById('taskSelect');
+      var nameInput = document.getElementById('taskNameInput');
       var input = document.getElementById('dueInput');
       var button = document.getElementById('saveDeadline');
       var hint = document.getElementById('deadlineHint');
       var notice = document.getElementById('overdueNotice');
       var items = Array.prototype.slice.call(document.querySelectorAll('.todo-item'));
+
+      var defaultDue = new Date();
+      defaultDue.setDate(defaultDue.getDate() + 1);
+      defaultDue.setHours(18, 0, 0, 0);
+
+      var pad = function (value) {
+        return value < 10 ? '0' + value : String(value);
+      };
+
+      input.value = defaultDue.getFullYear() + '-' +
+        pad(defaultDue.getMonth() + 1) + '-' +
+        pad(defaultDue.getDate()) + 'T' + pad(defaultDue.getHours()) + ':' + pad(defaultDue.getMinutes());
 
       function formatDeadline(value) {
         var parts = value.split('T');
@@ -439,18 +451,6 @@
         updateNotice();
       }
 
-      items.forEach(function (item) {
-        var id = item.getAttribute('data-id');
-        var title = item.querySelector('.title').textContent;
-        var option = document.createElement('option');
-
-        option.value = id;
-        option.textContent = title;
-        select.appendChild(option);
-      });
-
-      select.value = 't3';
-      input.value = saved[select.value] || input.value;
       refreshAll();
 
       var list = document.querySelector('.todo-list');
@@ -507,30 +507,33 @@
         hint.classList.toggle('error', Boolean(isError));
       }
 
-      select.addEventListener('change', function () {
-        input.value = saved[select.value] || '';
-        showHint('', false);
-      });
-
       button.addEventListener('click', function () {
+        var name = nameInput.value.replace(/\s+/g, ' ').trim();
+
+        if (!name) {
+          showHint('请输入任务名称', true);
+          nameInput.focus();
+          return;
+        }
+
         if (!input.value) {
           showHint('请先选择截止时间', true);
           return;
         }
 
-        var id = select.value;
-        var item = document.querySelector('.todo-item[data-id="' + id + '"]');
+        var item = findItemByName(name);
+        var isNew = !item;
 
-        if (!item) {
-          showHint('没有可设置截止时间的任务', true);
-          return;
+        if (isNew) {
+          item = createTask(name);
         }
 
-        var title = select.options[select.selectedIndex].textContent;
+        var id = item.getAttribute('data-id');
 
         saved[id] = input.value;
         renderDue(item);
         updateNotice();
+        updateStats();
 
         var stored = true;
         try {
@@ -539,14 +542,22 @@
           stored = false;
         }
 
-        var expired = !item.classList.contains('done') && isOverdue(item);
-
         if (!stored) {
           showHint('已更新显示，但浏览器阻止了本地保存', true);
-        } else if (expired) {
-          showHint('已保存，但「' + title + '」的截止时间已过期', true);
+        } else if (isNew) {
+          showHint('已添加任务「' + name + '」并保存截止时间', false);
+          nameInput.value = '';
+        } else if (!item.classList.contains('done') && isOverdue(item)) {
+          showHint('已保存，但「' + name + '」的截止时间已过期', true);
         } else {
-          showHint('已保存「' + title + '」的截止时间', false);
+          showHint('已保存「' + name + '」的截止时间', false);
+        }
+      });
+
+      nameInput.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' && !event.isComposing) {
+          event.preventDefault();
+          button.click();
         }
       });
 
@@ -574,7 +585,46 @@
         tag.classList.add('done');
       }
 
-      items.forEach(function (item) {
+      var taskSeq = items.reduce(function (max, item) {
+        var number = Number(item.getAttribute('data-id').replace('t', ''));
+        return isNaN(number) ? max : Math.max(max, number);
+      }, 0);
+
+      function findItemByName(name) {
+        var target = name.toLowerCase();
+
+        for (var i = 0; i < items.length; i += 1) {
+          var text = items[i].querySelector('.title').textContent.replace(/\s+/g, ' ').trim();
+
+          if (text.toLowerCase() === target) {
+            return items[i];
+          }
+        }
+
+        return null;
+      }
+
+      function createTask(name) {
+        taskSeq += 1;
+
+        var id = 't' + taskSeq;
+        var item = document.createElement('li');
+
+        item.className = 'todo-item';
+        item.setAttribute('data-id', id);
+        item.innerHTML = '<input type="checkbox" disabled />' +
+          '<div class="todo-text"><span class="title"></span><span class="due" hidden></span></div>' +
+          '<span class="tag">待开始</span>';
+        item.querySelector('.title').textContent = name;
+
+        list.appendChild(item);
+        items.push(item);
+        bindTask(item);
+
+        return item;
+      }
+
+      function bindTask(item) {
         item.addEventListener('click', function () {
           if (item.classList.contains('done')) {
             return;
@@ -584,7 +634,9 @@
           updateStats();
           refreshAll();
         });
-      });
+      }
+
+      items.forEach(bindTask);
 
       completeAllButton.addEventListener('click', function () {
         items.forEach(markDone);
@@ -593,8 +645,6 @@
       });
 
       clearButton.addEventListener('click', function () {
-        var selectedId = select.value;
-
         items = items.filter(function (item) {
           if (!item.classList.contains('done')) {
             return true;
@@ -603,21 +653,6 @@
           item.remove();
           return false;
         });
-
-        Array.prototype.slice.call(select.options).forEach(function (option) {
-          if (!document.querySelector('.todo-item[data-id="' + option.value + '"]')) {
-            option.remove();
-          }
-        });
-
-        if (selectedId && !document.querySelector('.todo-item[data-id="' + selectedId + '"]')) {
-          if (select.options.length) {
-            select.selectedIndex = 0;
-            input.value = saved[select.value] || '';
-          } else {
-            input.value = '';
-          }
-        }
 
         updateStats();
         refreshAll();
