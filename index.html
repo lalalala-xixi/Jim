@@ -400,12 +400,12 @@
       var list = document.querySelector('.todo-list');
       var sortButton = document.getElementById('sortBtn');
 
-      sortButton.addEventListener('click', function () {
+      function sortByDeadline() {
         var ordered = items.slice().sort(function (a, b) {
           var timeA = deadlineTime(a);
           var timeB = deadlineTime(b);
 
-          if (timeA === null && timeB === null) {
+          if (timeA === timeB) {
             return 0;
           }
           if (timeA === null) {
@@ -421,6 +421,20 @@
           list.appendChild(item);
         });
         items = ordered;
+      }
+
+      sortButton.addEventListener('click', function () {
+        var hasDeadline = items.some(function (item) {
+          return deadlineTime(item) !== null;
+        });
+
+        if (!hasDeadline) {
+          showHint('还没有设置截止时间，先为任务设置截止时间', true);
+          return;
+        }
+
+        sortByDeadline();
+        showHint('已按截止时间从早到晚排序', false);
       });
 
       function showHint(message, isError) {
