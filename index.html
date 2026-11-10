@@ -288,7 +288,7 @@
 
     .clear-btn:hover {
       border-color: #dc2626;
-      background: #fff5f5;
+      background: #230404;
       color: #dc2626;
     }
   </style>
@@ -300,7 +300,7 @@
         <h1>任务代办</h1>
         <button class="sort-btn" id="sortBtn" type="button" title="点击按截止时间排序，再次点击反向排序">按截止时间 早→晚</button>
       </div>
-      <p>今天是 11 月 9 日，共 5 项任务</p>
+      <p>今天是 11 月 9 日，共 <span id="taskCount">5</span> 项任务</p>
     </header>
 
     <div class="overdue-notice" id="overdueNotice" aria-live="polite" hidden></div>
@@ -515,6 +515,12 @@
 
         var id = select.value;
         var item = document.querySelector('.todo-item[data-id="' + id + '"]');
+
+        if (!item) {
+          showHint('没有可设置截止时间的任务', true);
+          return;
+        }
+
         var title = select.options[select.selectedIndex].textContent;
 
         saved[id] = input.value;
@@ -540,7 +546,9 @@
       });
 
       var completeAllButton = document.getElementById('completeAllBtn');
+      var clearButton = document.getElementById('clearBtn');
       var footerStats = document.getElementById('footerStats');
+      var taskCount = document.getElementById('taskCount');
 
       function updateStats() {
         var doneCount = items.filter(function (item) {
@@ -548,6 +556,7 @@
         }).length;
 
         footerStats.textContent = '已完成 ' + doneCount + ' 项 · 还剩 ' + (items.length - doneCount) + ' 项';
+        taskCount.textContent = items.length;
         completeAllButton.disabled = doneCount === items.length;
       }
 
@@ -560,6 +569,37 @@
           tag.textContent = '已完成';
           tag.classList.add('done');
         });
+
+        updateStats();
+        refreshAll();
+      });
+
+      clearButton.addEventListener('click', function () {
+        var selectedId = select.value;
+
+        items = items.filter(function (item) {
+          if (!item.classList.contains('done')) {
+            return true;
+          }
+
+          item.remove();
+          return false;
+        });
+
+        Array.prototype.slice.call(select.options).forEach(function (option) {
+          if (!document.querySelector('.todo-item[data-id="' + option.value + '"]')) {
+            option.remove();
+          }
+        });
+
+        if (selectedId && !document.querySelector('.todo-item[data-id="' + selectedId + '"]')) {
+          if (select.options.length) {
+            select.selectedIndex = 0;
+            input.value = saved[select.value] || '';
+          } else {
+            input.value = '';
+          }
+        }
 
         updateStats();
         refreshAll();
