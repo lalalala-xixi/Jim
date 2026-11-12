@@ -49,6 +49,13 @@
       flex-wrap: wrap;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
     .sort-btn {
       flex-shrink: 0;
       padding: 6px 12px;
@@ -303,7 +310,10 @@
     <header class="todo-header">
       <div class="todo-header-top">
         <h1>任务代办</h1>
-        <button class="sort-btn" id="sortBtn" type="button" title="点击按截止时间排序，再次点击反向排序">按截止时间 早→晚</button>
+        <div class="header-actions">
+          <button class="sort-btn" id="exportBtn" type="button">导出</button>
+          <button class="sort-btn" id="sortBtn" type="button" title="点击按截止时间排序，再次点击反向排序">按截止时间 早→晚</button>
+        </div>
       </div>
       <p>今天是 11 月 9 日，共 <span id="taskCount">5</span> 项任务</p>
     </header>
