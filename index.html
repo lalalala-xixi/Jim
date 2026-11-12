@@ -668,6 +668,56 @@
         refreshAll();
       });
 
+      var exportButton = document.getElementById('exportBtn');
+
+      exportButton.addEventListener('click', function () {
+        var now = new Date();
+        var datePart = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+        var timePart = pad(now.getHours()) + ':' + pad(now.getMinutes());
+        var lines = ['任务代办', '导出时间：' + datePart + ' ' + timePart, ''];
+
+        if (items.length === 0) {
+          lines.push('（暂无任务）');
+        }
+
+        items.forEach(function (item, index) {
+          var done = item.classList.contains('done');
+          var value = saved[item.getAttribute('data-id')];
+          var line = (index + 1) + '. [' + (done ? '已完成' : '未完成') + '] ' +
+            item.querySelector('.title').textContent.trim();
+
+          if (value) {
+            line += '（截止 ' + formatDeadline(value);
+
+            if (!done && isOverdue(item)) {
+              line += '，已过期';
+            }
+
+            line += '）';
+          }
+
+          lines.push(line);
+        });
+
+        var doneCount = items.filter(function (item) {
+          return item.classList.contains('done');
+        }).length;
+
+        lines.push('');
+        lines.push('已完成 ' + doneCount + ' 项 · 还剩 ' + (items.length - doneCount) + ' 项');
+
+        var blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/plain;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+
+        link.href = url;
+        link.download = '任务清单-' + datePart + '.txt';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      });
+
       updateStats();
 
       setInterval(refreshAll, 30000);
